@@ -1,0 +1,18 @@
+{
+  "user_info": {
+    "name": "User Info",
+    "description": "Account checker by replies and ID/username searcher",
+    "version": "1.0.0",
+    "author": "cxvimba",
+    "file_name": "user_info.py",
+    "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/user_info.py"
+  },
+  "inline_keyboard": {
+    "name": "Inline Keyboard",
+    "description": "Sends custom keyboard markups with messages and media",
+    "version": "1.0.0",
+    "author": "cxvimba",
+    "file_name": "inline_keyboard.py",
+    "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/inline_keyboard.py"
+  }
+}

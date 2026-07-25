@@ -1,6 +1,7 @@
+import asyncio
 import os
 from pyrogram import Client, enums
-from pyrogram.types import Message, LinkPreviewOptions, InputMediaPhoto
+from pyrogram.types import Message, LinkPreviewOptions, InputMediaPhoto, InputPhoneContact
 from kaguya.types import BaseModule, ModuleInfo, on_command
 from kaguya.utils.prefix import get_prefix
 
@@ -9,7 +10,7 @@ class UserInfoModule(BaseModule):
     meta = ModuleInfo(
         name='Информация о пользователе',
         description='Чекер аккаунтов по ответам и поисковик по ID или @username',
-        version='1.0.0',
+        version='1.1.0',
         author='cxvimba',
         commands={
             'user | юзер | пользователь': 'Показать информацию о пользователе (себе или по ответу)',
@@ -26,8 +27,9 @@ class UserInfoModule(BaseModule):
                 'Usage: <code>{p}tg-find &lt;@username or ID&gt;</code>\n'
                 'Example: <code>{p}tg-find @durov</code>'
             ),
-            'searching': '🔍 <b>Kaguya:</b> Searching for user «{target}»...',
+            'searching_phone': '☎️ <b>Kaguya:</b> Importing phone contact «{target}»...',
             'not_found': '❌ <b>Kaguya |</b> User not found.\n<i>Error: {error}</i>',
+            'timeout_error': '⏱ <b>Kaguya:</b> Request timed out! Telegram servers did not respond in time.',
             'card_error': '❌ <b>Kaguya:</b> Error generating user card:\n<code>{error}</code>',
             'yes': 'Yes',
             'no': 'No',
@@ -62,7 +64,9 @@ class UserInfoModule(BaseModule):
                 'Пример: <code>{p}tg-find @durov</code>'
             ),
             'searching': '🔍 <b>Kaguya:</b> Ищу пользователя «{target}»...',
-            'not_found': '❌ <b>Kaguya |</b> Пользователь не найден.\n<i>Ошибка: {error}</i>',
+            'searching_phone': '☎️ <b>Kaguya:</b> Импортирую телефонный контакт «{target}»...',
+            'not_found': '❌ <b>Kaguya:</b> Пользователь не найден.\n<i>Ошибка: {error}</i>',
+            'timeout_error': '⏱ <b>Kaguya:</b> Превышено время ожидания запроса! Серверы Telegram не ответили вовремя.',
             'card_error': '❌ <b>Kaguya:</b> Ошибка при формировании карточки пользователя:\n<code>{error}</code>',
             'yes': 'Да',
             'no': 'Нет',
@@ -109,7 +113,7 @@ class UserInfoModule(BaseModule):
 
     @on_command(['tg-find', 'тг-поиск'])
     async def find_user_cmd(self, client: Client, message: Message):
-        """Ищет пользователя в Telegram по ID или @username."""
+        """Ищет пользователя по ID, @username или номеру телефона."""
         if len(message.command) < 2:
             p = get_prefix(client)
             await message.edit_text(
@@ -118,10 +122,44 @@ class UserInfoModule(BaseModule):
             return
 
         target = message.command[1].strip()
+
+        clean_target = target.replace('+', '').replace(' ', '').replace('-', '')
+        is_phone = False
+        if target.startswith('+') and clean_target.isdigit():
+            is_phone = True
+        elif target.isdigit() and len(target) >= 10:
+            is_phone = True
+
+        if is_phone:
+            await message.edit_text(
+                self.get_text('searching_phone').format(target=target)
+            )
+            try:
+                imported = await asyncio.wait_for(
+                    client.import_contacts(
+                        [InputPhoneContact(phone=target, first_name='Kaguya Search')]
+                    ),
+                    timeout=8
+                )
+                if imported and imported.users:
+                    user = imported.users[0]
+                    await client.delete_contacts(user.id)
+                    await self._send_user_card(client, message, user.id)
+                else:
+                    await message.edit_text(
+                        self.get_text('not_found').format(error='Phone number not registered')
+                    )
+            except asyncio.TimeoutError:
+                await message.edit_text(self.get_text('timeout_error'))
+            except Exception as e:
+                await message.edit_text(
+                    self.get_text('not_found').format(error=e)
+                )
+            return
+
         await message.edit_text(
             self.get_text('searching').format(target=target)
         )
-
         try:
             if target.isdigit():
                 target = int(target)
@@ -129,8 +167,10 @@ class UserInfoModule(BaseModule):
             pass
 
         try:
-            user = await client.get_users(target)
+            user = await asyncio.wait_for(client.get_users(target), timeout=8)
             await self._send_user_card(client, message, user.id)
+        except asyncio.TimeoutError:
+            await message.edit_text(self.get_text('timeout_error'))
         except Exception as e:
             await message.edit_text(
                 self.get_text('not_found').format(error=e)
@@ -139,8 +179,8 @@ class UserInfoModule(BaseModule):
     async def _send_user_card(self, client: Client, message: Message, user_id: int):
         """Метод для генерации и отправки карточки пользователя."""
         try:
-            user = await client.get_users(user_id)
-            chat_info = await client.get_chat(user_id)
+            user = await asyncio.wait_for(client.get_users(user_id), timeout=6)
+            chat_info = await asyncio.wait_for(client.get_chat(user_id), timeout=6)
 
             full_name = user.full_name
             usernames = f'@{user.username}' if user.username else self.get_text('none')
@@ -198,6 +238,11 @@ class UserInfoModule(BaseModule):
                             caption=text
                         )
                     )
+                except Exception:
+                    await message.edit_text(
+                        text=text,
+                        link_preview_options=LinkPreviewOptions(is_disabled=True)
+                    )
                 finally:
                     if photo_path and os.path.exists(photo_path):
                         os.remove(photo_path)
@@ -209,6 +254,8 @@ class UserInfoModule(BaseModule):
                     )
                 )
 
+        except asyncio.TimeoutError:
+            await message.edit_text(self.get_text('timeout_error'))
         except Exception as e:
             await message.edit_text(
                 self.get_text('card_error').format(error=e)

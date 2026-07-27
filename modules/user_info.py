@@ -1,7 +1,7 @@
 import asyncio
 import os
 from pyrogram import Client, enums
-from pyrogram.types import Message, LinkPreviewOptions, InputMediaPhoto, InputPhoneContact
+from pyrogram.types import Message, LinkPreviewOptions, InputMediaPhoto, InputPhoneContact, User, Chat
 from kaguya.types import BaseModule, ModuleInfo, on_command
 from kaguya.utils.prefix import get_prefix
 
@@ -10,7 +10,7 @@ class UserInfoModule(BaseModule):
     meta = ModuleInfo(
         name='Информация о пользователе',
         description='Чекер аккаунтов по ответам и поисковик по ID или @username',
-        version='1.1.0',
+        version='1.1.1',
         author='cxvimba',
         commands={
             'user | юзер | пользователь': 'Показать информацию о пользователе (себе или по ответу)',
@@ -124,13 +124,7 @@ class UserInfoModule(BaseModule):
         target = message.command[1].strip()
 
         clean_target = target.replace('+', '').replace(' ', '').replace('-', '')
-        is_phone = False
         if target.startswith('+') and clean_target.isdigit():
-            is_phone = True
-        elif target.isdigit() and len(target) >= 10:
-            is_phone = True
-
-        if is_phone:
             await message.edit_text(
                 self.get_text('searching_phone').format(target=target)
             )
@@ -179,8 +173,14 @@ class UserInfoModule(BaseModule):
     async def _send_user_card(self, client: Client, message: Message, user_id: int):
         """Метод для генерации и отправки карточки пользователя."""
         try:
-            user = await asyncio.wait_for(client.get_users(user_id), timeout=6)
-            chat_info = await asyncio.wait_for(client.get_chat(user_id), timeout=6)
+            try:
+                user = await asyncio.wait_for(client.get_users(user_id), timeout=6)
+            except Exception:
+                user = User(id=user_id)
+            try:
+                chat_info = await asyncio.wait_for(client.get_chat(user_id), timeout=6)
+            except Exception:
+                chat_info = Chat(id=user_id)
 
             full_name = user.full_name
             usernames = f'@{user.username}' if user.username else self.get_text('none')

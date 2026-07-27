@@ -2,7 +2,7 @@
   "user_info": {
     "name": "User Info",
     "description": "Account checker by replies and ID/username searcher",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "author": "cxvimba",
     "file_name": "user_info.py",
     "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/user_info.py"

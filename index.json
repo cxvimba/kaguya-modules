@@ -30,5 +30,13 @@
     "author": "cxvimba",
     "file_name": "waifu.py",
     "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/waifu.py"
+  },
+  "sauce": {
+    "name": "Sauce",
+    "description": "Search for anime by screenshot, GIF, or video using Trace.moe",
+    "version": "1.0.0",
+    "author": "cxvimba",
+    "file_name": "sauce.py",
+    "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/sauce.py"
   }
 }

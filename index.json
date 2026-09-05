@@ -46,5 +46,13 @@
     "author": "cxvimba",
     "file_name": "afk.py",
     "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/afk.py"
+  },
+  "whisper": {
+    "name": "Secret Messages",
+    "description": "Secret messages via inline assistant",
+    "version": "1.0.0",
+    "author": "cxvimba",
+    "file_name": "whisper.py",
+    "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/whisper.py"
   }
 }

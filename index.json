@@ -38,5 +38,13 @@
     "author": "cxvimba",
     "file_name": "sauce.py",
     "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/sauce.py"
+  },
+  "afk": {
+    "name": "Afk",
+    "description": "Answering machine while you are away",
+    "version": "1.0.0",
+    "author": "cxvimba",
+    "file_name": "afk.py",
+    "raw_url": "https://raw.githubusercontent.com/cxvimba/kaguya-modules/main/modules/afk.py"
   }
 }
